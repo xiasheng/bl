@@ -1,56 +1,88 @@
 
 from bl.views.common import *
 from bl.views.auth import GetAccessToken
-from bl.models.models import User
+from bl.models.models import User, Profile
 import random, hashlib
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 
-
-def generateAccountId():
-    id = ''
+def generateUserId():
+    id = 0
     while True:
-        id = str(random.randint(100000, 200000))
-        if User.objects.filter(account_id=id).count() > 0:
+        id = random.randint(100000, 200000)
+        if User.objects.filter(uid=id).count() > 0:
             continue
         else:
             return id
     return id
 
+def checkParam(email, password):
+    try:
+        if email is None:
+            raise BLParamError('email field is required')
+        validate_email(email)
+        if User.objects.filter(email=email).count() > 0:
+            raise BLParamError( email + ' is already registered')
+
+        if password is None:
+            raise BLParamError('password field is required')
+        if len(password) < 6:
+            raise BLParamError('password is too short')
+
+    except ValidationError:
+        raise BLParamError('illegal email address: ' + email)
+
 
 def Register(request):
     ret = {}
-    email = request.POST.get('email', '')
-    password = request.POST.get('password', '')
-    nickname = request.POST.get('nickname', '')
-    gender = request.POST.get('gender', '')
-    birthday = request.POST.get('birthday', None)
-    address = request.POST.get('address', '')
-    avatar = request.POST.get('avatar', '')
-    account_id = generateAccountId()
 
     try:
-        user = User(account_id=account_id, email=email, password=hashlib.md5(MAGIC_SALT+password).hexdigest(),
-                    nickname=nickname, gender=gender, birthday=birthday, address=address, avatar=avatar)
-        user.save()
-        ret['uid'] = account_id
-        ret['at'] = GetAccessToken(account_id)
+        email = request.POST.get('email', None)
+        password = request.POST.get('password', None)
+        checkParam(email, password)
+        uid = generateUserId()
+        user = User.objects.create(uid=uid, email=email, password=hashlib.md5(MAGIC_SALT+password).hexdigest())
+        profile = Profile.objects.create(user=user)
+        ret['uid'] = uid
+        ret['at'] = GetAccessToken(uid)
         return SuccessResponse(ret)
-    except KeyError:
-        return ErrorResponse(E_PARAM)
-
+    except BLParamError, e:
+        return ErrorResponse(E_PARAM, e.info)
+    except:
+        return ErrorResponse(E_SYSTEM)
 
 def QuickRegister(request):
     ret = {}
-    account_id = generateAccountId()
+    uid = generateUserId()
 
     try:
-        user = User(account_id=account_id)
-        user.save()
-        ret['uid'] = account_id
-        ret['at'] = GetAccessToken(account_id)
+        user = User.objects.create(uid=uid)
+        profile = Profile.objects.create(user=user)
+        ret['uid'] = uid
+        ret['at'] = GetAccessToken(uid)
         return SuccessResponse(ret)
     except:
-        return ErrorResponse(E_PARAM)
+        return ErrorResponse(E_SYSTEM)
     
+def BindEmail(request):
+    ret = {}
+
+    try:
+        uid = int(request.POST.get('uid', 0))
+        email = request.POST.get('email', None)
+        password = request.POST.get('password', None)
+        checkParam(email, password)
+        user = User.objects.get(uid=uid)
+        user.email = email
+        user.password = hashlib.md5(MAGIC_SALT+password).hexdigest()
+        user.save() 
+    except BLParamError, e:
+        return ErrorResponse(E_PARAM, e.info)
+    except:
+        return ErrorResponse(E_SYSTEM)
+
+
+
 def ShowAllAccounts(request):
     ret = {}
     try:
@@ -59,7 +91,7 @@ def ShowAllAccounts(request):
         ret['count'] = count
         ret['ids'] = []
         for u in users:
-            ret['ids'].append(u.account_id)
+            ret['ids'].append(u.uid)
         return SuccessResponse(ret)
     except:
         return ErrorResponse(E_PARAM)

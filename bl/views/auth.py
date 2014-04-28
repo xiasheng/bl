@@ -28,17 +28,17 @@ def Login(request):
     ret = {}
 
     try:
-        uid = request.POST.get('uid', '')
-        email = request.POST.get('email', '')
-        password = hashlib.md5(MAGIC_SALT + request.POST.get('password')).hexdigest()
-        
-        found = 0
+        uid = request.POST.get('uid', None)
+        email = request.POST.get('email', None)
+        password = request.POST.get('password')
+
+        user = None
         if uid:
-            user = User.objects.get(account_id=uid, password=password)
+            user = User.objects.get(uid=uid, password=hashlib.md5(MAGIC_SALT + password).hexdigest())
         elif email:
-            user = User.objects.get(email=email, password=password)
+            user = User.objects.get(email=email, password=hashlib.md5(MAGIC_SALT + password).hexdigest())
                 
-        ret['uid'] = user.account_id
+        ret['uid'] = user.uid
         ret['at'] = GetAccessToken(uid)
         return SuccessResponse(ret) 
             
@@ -59,7 +59,7 @@ def Logout(request):
         if at == cache.get(uid):
             cache.delete(uid)
 
-    except :
+    except BLException:
         pass
 
     return SuccessResponse(ret) 

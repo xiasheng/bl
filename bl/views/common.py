@@ -11,6 +11,13 @@ E_AUTH = 10002
 E_PARAM = 10003
 E_NOT_SUPPORT = 10004
 
+class BLException(Exception):
+    def __init__(self, info):      
+        Exception.__init__(self)  
+        self.info = info
+
+class BLParamError(BLException):
+    pass
 
 def RandomStr(randomlength=64):
     str = ''
@@ -22,11 +29,12 @@ def RandomStr(randomlength=64):
     return str
 
 def SuccessResponse(content):
+    content['rc'] = 0
     return HttpResponse(json.dumps(content),  content_type="application/json")
 
 def ErrorResponse(err_code, info=''):
     content = {} 
-    content['err_code'] = err_code
+    content['rc'] = err_code
     if info:
         content['info'] = info 
     return HttpResponse(json.dumps(content),  content_type="application/json")
