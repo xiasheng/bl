@@ -1,6 +1,6 @@
 
 from bl.views.common import *
-from bl.views.auth import GetAccessToken
+from bl.views.auth import GenerateAccessToken
 from bl.models.models import User, Profile
 import random, hashlib
 from django.core.exceptions import ValidationError
@@ -44,7 +44,7 @@ def Register(request):
         user = User.objects.create(uid=uid, email=email, password=hashlib.md5(MAGIC_SALT+password).hexdigest())
         profile = Profile.objects.create(user=user)
         ret['uid'] = uid
-        ret['at'] = GetAccessToken(uid)
+        ret['at'] = GenerateAccessToken(uid)
         return SuccessResponse(ret)
     except BLParamError, e:
         return ErrorResponse(E_PARAM, e.info)
@@ -59,7 +59,7 @@ def QuickRegister(request):
         user = User.objects.create(uid=uid)
         profile = Profile.objects.create(user=user)
         ret['uid'] = uid
-        ret['at'] = GetAccessToken(uid)
+        ret['at'] = GenerateAccessToken(uid)
         return SuccessResponse(ret)
     except:
         return ErrorResponse(E_SYSTEM)
@@ -81,7 +81,43 @@ def BindEmail(request):
     except:
         return ErrorResponse(E_SYSTEM)
 
+def CreateTestUsers(request):
+    ret = {}
+    ret['count'] = 0
+    ret['users'] = []
 
+    try:
+        prefix = request.POST.get('prefix', 'test')
+        password = request.POST.get('password', '123456')
+        num = int(request.POST.get('num', 10))
+        
+        for i in range(num):
+            email = prefix + str(i+1) + '@test.com'
+            uid = generateUserId()
+            user = User.objects.create(uid=uid, email=email, password=hashlib.md5(MAGIC_SALT+password).hexdigest(), is_test=True)
+            profile = Profile.objects.create(user=user)
+            ret['users'].append(email)
+            ret['count'] += 1
+        
+        return SuccessResponse(ret)
+    except:
+        return ErrorResponse(E_SYSTEM)
+        
+def DeleteTestUsers(request):
+    ret = {}
+
+    try:
+        users = User.objects.filter(is_test=True)
+        
+        for user in users:
+            Profile.objects.filter(user=user).delete()
+            #Photo.objects.filter(user=user).delete()
+            #Status.objects.filter(user=user).delete()
+            user.delete()
+    except KeyError:
+        pass
+        
+    return SuccessResponse(ret)        
 
 def ShowAllAccounts(request):
     ret = {}
@@ -92,10 +128,11 @@ def ShowAllAccounts(request):
         ret['ids'] = []
         for u in users:
             ret['ids'].append(u.uid)
-        return SuccessResponse(ret)
     except:
-        return ErrorResponse(E_PARAM)
-    
+        pass
+
+    return SuccessResponse(ret)
+
 def ResetPassword(request):
     return ErrorResponse(E_NOT_SUPPORT)
 

@@ -6,6 +6,7 @@ class User(models.Model):
     uid = models.IntegerField(primary_key=True)
     password = models.CharField(max_length=128, null=True)
     email = models.EmailField(null=True)
+    is_test = models.BooleanField(default=False) 
     time_created = models.IntegerField(default=int(time.time()))
  
 class Profile(models.Model):

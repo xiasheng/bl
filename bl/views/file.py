@@ -3,7 +3,6 @@
 import os, hashlib
 from bl.views.common import *
 
-
 #ADDR_SERVER = '54.201.119.130/f'
 ADDR_SERVER = '192.168.77.160/f'
 
@@ -24,14 +23,14 @@ OTHER_PATH = UPLOAD_FILE_PATH + '/o/'
 def GetFileExtension(file):
     ext = ''
     if '.' in file.name:
-        ext = '.' + file.name.split('.')[-1]
+        ext = file.name.split('.')[-1]
     return ext
 
 
 FILE_PATH = {
     'StatusImage'  : STATUS_IMAGE_PATH,
     'StatusAudio'  : STATUS_AUDIO_PATH,
-    'MessageImage' : STATUS_IMAGE_PATH,
+    'MessageImage' : MESSAGE_IMAGE_PATH,
     'MessageAudio' : MESSAGE_AUDIO_PATH,
     'ProfileAvatar': PROFILE_AVATAR_PATH,
     'ProfilePhoto' : PROFILE_PHOTO_PATH,
@@ -50,7 +49,9 @@ def SaveFile(file, type):
     path = GetFilePathByType(type)
 
     content = file.read()
-    fid = hashlib.md5(content).hexdigest() + ext
+    fid = hashlib.md5(content).hexdigest()
+    if ext:
+        fid = fid + '.' + ext
 
     fullpath = os.path.join(path, fid)
     f = open(fullpath, 'w+')
@@ -76,12 +77,11 @@ def UploadMessageFile(request):
 
     try:
         file = request.FILES.get('file')
-        type = request.REQUEST.get('type', '')
+        ext = GetFileExtension(file)
         
-        
-        if type == 'image':
+        if ext in ['jpg', 'jpeg', 'png']:
             (path,url) = SaveFile(file, "MessageImage")
-        elif type == 'audio':
+        elif ext in ['pcm', 'aud']:
             (path,url) = SaveFile(file, "MessageAudio")
         else:
             (path,url) = ('', '')
