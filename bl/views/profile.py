@@ -55,7 +55,7 @@ def AddPhoto(request):
         ret['pid'] = photo.id
 
         return SuccessResponse(ret)
-    except KeyError:
+    except:
         return ErrorResponse(E_PARAM)
         
 def DelPhoto(request):
@@ -69,7 +69,7 @@ def DelPhoto(request):
         photo.delete()
 
         return SuccessResponse(ret)
-    except KeyError:
+    except:
         return ErrorResponse(E_PARAM)        
         
 def ListPhoto(request):
@@ -85,6 +85,6 @@ def ListPhoto(request):
             ret['photos'].append(p.url)
             
         return SuccessResponse(ret)
-    except KeyError:
+    except:
         return ErrorResponse(E_PARAM)   
 
