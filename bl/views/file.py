@@ -2,6 +2,7 @@
 
 import os, hashlib
 from bl.views.common import *
+from bl.views.auth import GetSelfUID
 
 #ADDR_SERVER = '54.201.119.130/f'
 ADDR_SERVER = '192.168.77.160/f'
@@ -60,17 +61,21 @@ def SaveFile(file, type):
 
     url = 'http://' + ADDR_SERVER + path[len(UPLOAD_FILE_PATH):] + fid
     if type in ["StatusImage", "MessageImage", "ProfilePhoto"]:
-        os.system('convert %s -resize %d %s' %(fullpath, SIZE_SMALL_IMAGE, os.path.join(path, "s_" + fid)))
+        os.system('convert %s -resize %d %s' %(fullpath, SIZE_SMALL_IMAGE, os.path.join(path, "tb_" + fid)))
 
-    return (path,url)
+    return (fullpath,url)
 
 
 def DeleteFile(filepath):
-    if os.path.isfile(filepath):
-        try:
-            os.remove(filepath)
-        except:
-            pass
+    try:
+        os.remove(filepath)
+        ext = filepath.split('.')[-1]
+        if ext in ['jpg', 'jpeg', 'png']:
+            tb = os.path.join(os.path.dirname(filepath), 'tb_' + os.path.basename(filepath))
+            os.remove(tb)
+    except:
+        pass 
+
 
 def UploadMessageFile(request):
     ret = {}

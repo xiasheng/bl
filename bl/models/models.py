@@ -31,15 +31,16 @@ class Profile(models.Model):
 class Photo(models.Model):
     user = models.ForeignKey('User')
     url = models.URLField(null=True)
+    path = models.CharField(max_length=128, null=True)
     time_created = models.IntegerField(default=int(time.time()))
      
 class Status(models.Model):
     user = models.ForeignKey('User')
     text = models.CharField(max_length=1024)
-    lat = models.DecimalField(max_digits=10, decimal_places=5)
-    lng = models.DecimalField(max_digits=10, decimal_places=5)
+    lat = models.DecimalField(max_digits=10, decimal_places=5, null=True)
+    lng = models.DecimalField(max_digits=10, decimal_places=5, null=True)
     type = models.CharField(max_length=64, default='text')
-    time_created = models.IntegerField(int(time.time()))
+    time_created = models.IntegerField(default=int(time.time()))
 
     def toJSON(self):
         r = {}
@@ -47,23 +48,19 @@ class Status(models.Model):
         r['sid'] = self.id
         r['type'] = self.type
         r['text'] = self.text
-        
-        if type != 'text':
+        r['time_created'] = self.time_created
+       
+        if self.type != 'text':
             r['files'] = []
             files = StatusFile.objects.filter(status=self)
             for f in files:
-                ff = {}
-                ff['fid'] = f.fid
-                ff['type'] = f.type
-                ff['url'] = f.url
-                f['files'].append(ff)
+                r['files'].append(f.url)
             
         return r
         
 class StatusFile(models.Model):
-    fid = models.IntegerField(primary_key=True)
     status = models.ForeignKey('Status')
-    type = models.CharField(max_length=64)
+    type = models.CharField(max_length=64, null=True)
     url = models.URLField(null=True)
-    path = models.CharField(max_length=64)
+    path = models.CharField(max_length=128, null=True)
     time_created = models.IntegerField(default=int(time.time()))
