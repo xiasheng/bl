@@ -100,7 +100,7 @@ def DelFriend(request):
 def ShowFriend(request):
     ret = {}
     try:
-        uid = GetSelfUID(request)
+        uid = int(request.GET.get('uid'))
         friends_bound = Friend.objects.filter(user=User(uid=uid), status='bound').order_by('-id')
         friends_sent_invite = Friend.objects.filter(user=User(uid=uid), status='sent_invite').order_by('-id')
         friends_recv_invite = Friend.objects.filter(user=User(uid=uid), status='recv_invite').order_by('-id')

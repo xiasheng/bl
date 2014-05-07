@@ -14,6 +14,7 @@ class User(models.Model):
     uid = models.IntegerField(primary_key=True)
     password = models.CharField(max_length=128, null=True)
     email = models.EmailField(null=True)
+    mac = models.CharField(max_length=32, null=True)
     xmpp_account = models.CharField(max_length=128, null=True)
     is_test = models.BooleanField(default=False) 
     time_created = models.IntegerField(default=int(time.time()))

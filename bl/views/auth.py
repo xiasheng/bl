@@ -1,4 +1,5 @@
 
+from django.http import HttpResponse
 from django.core.cache import cache
 from bl.views.common import *
 from bl.models.models import User
@@ -94,6 +95,18 @@ def Logout(request):
         pass
 
     return SuccessResponse(ret)
+
+def ExternalAuth(request):
+    try:
+        name = request.POST.get('name')
+        password = request.POST.get('password')
+        uid = cache.get(password)
+        if uid and name.find(str(uid)) != -1:
+            return HttpResponse("success", status=200)    
+    except:
+        pass
+
+    return HttpResponse('failed', status=400)
 
 def LoginTestUsers(request):
     ret = {}

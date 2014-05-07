@@ -72,5 +72,5 @@ def GetStatusByUser(request):
             ret['hasmore'] = 1
             
         return SuccessResponse(ret)    
-    except IOError:
+    except:
         return ErrorResponse(E_PARAM)

@@ -36,7 +36,7 @@ def GetProfile(request):
     ret = {}
 
     try:
-        uid = GetSelfUID(request)
+        uid = request.GET.get('uid')
         profile = Profile.objects.get(user=User(uid=uid))
         ret['profile'] = profile.toJSON()
         return SuccessResponse(ret)
