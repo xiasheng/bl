@@ -6,6 +6,7 @@ from views.auth import RequireLogin, Login, Logout, LoginTestUsers, ShowOnlineUs
 from views.profile import UpdateProfile, GetProfile, AddPhoto, DelPhoto, ListPhoto
 from views.file import UploadMessageFile
 from views.status import PostStatus, GetStatusByID, GetStatusByUser
+from views.friend import InviteRequest, InviteResponse, DelFriend, ShowFriend
 
 urlpatterns = patterns('',
 
@@ -32,4 +33,10 @@ urlpatterns = patterns('',
     url(r'^status/show/id/$', RequireLogin(GetStatusByID)),
     url(r'^status/show/user/$', RequireLogin(GetStatusByUser)),
     url(r'^file/upload/$', RequireLogin(UploadMessageFile)),
+
+    url(r'^friend/invite/request/$', RequireLogin(InviteRequest)),
+    url(r'^friend/invite/response/$', RequireLogin(InviteResponse)),
+    url(r'^friend/del/$', RequireLogin(DelFriend)),
+    url(r'^friend/show/$', RequireLogin(ShowFriend)),
+
 )

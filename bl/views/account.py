@@ -16,6 +16,9 @@ def generateUserId():
             return id
     return id
 
+def generateXmppAccount(uid):
+    return 'x' + str(uid) + '@test.com'
+
 def checkParam(email, password):
     try:
         if email is None:
@@ -41,10 +44,12 @@ def Register(request):
         password = request.POST.get('password', None)
         checkParam(email, password)
         uid = generateUserId()
-        user = User.objects.create(uid=uid, email=email, password=hashlib.md5(MAGIC_SALT+password).hexdigest())
+        xmpp_account = generateXmppAccount(uid)
+        user = User.objects.create(uid=uid, email=email, password=hashlib.md5(MAGIC_SALT+password).hexdigest(), xmpp_account=xmpp_account)
         profile = Profile.objects.create(user=user)
         ret['uid'] = uid
-        ret['at'] = GenerateAccessToken(uid)
+        ret['access_token'] = GenerateAccessToken(uid)
+        ret['xmpp_account'] = xmpp_account
         return SuccessResponse(ret)
     except BLParamError, e:
         return ErrorResponse(E_PARAM, e.info)
@@ -54,12 +59,14 @@ def Register(request):
 def QuickRegister(request):
     ret = {}
     uid = generateUserId()
+    xmpp_account = generateXmppAccount(uid)
 
     try:
-        user = User.objects.create(uid=uid)
+        user = User.objects.create(uid=uid, xmpp_account=xmpp_account)
         profile = Profile.objects.create(user=user)
         ret['uid'] = uid
-        ret['at'] = GenerateAccessToken(uid)
+        ret['accsee_token'] = GenerateAccessToken(uid)
+        ret['xmpp_account'] = xmpp_account
         return SuccessResponse(ret)
     except:
         return ErrorResponse(E_SYSTEM)
@@ -94,7 +101,8 @@ def CreateTestUsers(request):
         for i in range(num):
             email = prefix + str(i+1) + '@test.com'
             uid = generateUserId()
-            user = User.objects.create(uid=uid, email=email, password=hashlib.md5(MAGIC_SALT+password).hexdigest(), is_test=True)
+            xmpp_account = generateXmppAccount(uid)
+            user = User.objects.create(uid=uid, email=email, password=hashlib.md5(MAGIC_SALT+password).hexdigest(), xmpp_account=xmpp_account, is_test=True)
             profile = Profile.objects.create(user=user)
             ret['users'].append(email)
             ret['count'] += 1
@@ -114,7 +122,7 @@ def DeleteTestUsers(request):
             #Photo.objects.filter(user=user).delete()
             #Status.objects.filter(user=user).delete()
             user.delete()
-    except KeyError:
+    except:
         pass
         
     return SuccessResponse(ret)        

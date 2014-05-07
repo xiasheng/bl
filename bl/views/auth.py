@@ -2,19 +2,33 @@
 from django.core.cache import cache
 from bl.views.common import *
 from bl.models.models import User
-import hashlib
+import hashlib, time
+
+AGING_TIME_ACCESS_TOKEN = 24 * 3600
 
 def GenerateAccessToken(uid):
     access_token = RandomStr()
-    cache.set(access_token, uid, 24 * 3600)
+    cache.set(access_token, uid, AGING_TIME_ACCESS_TOKEN)
 
+    userinfo = {}
+    userinfo['token'] = access_token
+    userinfo['time'] = int(time.time())
+    cache.set(str(uid), userinfo, AGING_TIME_ACCESS_TOKEN)
+    
     all = cache.get('allonlineuser')
     if all is None:
         all = []
     all.append(access_token)
     cache.set('allonlineuser', all, None)
 
-    return access_token
+    return access_token        
+    
+def IsOnline(uid):
+    user = cache.get(str(uid))
+    if user:
+        return True
+    else:
+        return False
 
 def GetSelfUID(request):
     return request.META['SELF_UID']
