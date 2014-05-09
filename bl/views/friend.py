@@ -30,7 +30,7 @@ def InviteRequest(request):
         return SuccessResponse(ret)
     except BLParamError, e:
         return ErrorResponse(E_PARAM, e.info)
-    except:
+    except IOError:
         return ErrorResponse(E_PARAM)
 
 
@@ -100,13 +100,17 @@ def DelFriend(request):
 def ShowFriend(request):
     ret = {}
     try:
-        uid = int(request.GET.get('uid'))
-        friends_bound = Friend.objects.filter(user=User(uid=uid), status='bound').order_by('-id')
-        friends_sent_invite = Friend.objects.filter(user=User(uid=uid), status='sent_invite').order_by('-id')
-        friends_recv_invite = Friend.objects.filter(user=User(uid=uid), status='recv_invite').order_by('-id')
-        friends_sent_reject = Friend.objects.filter(user=User(uid=uid), status='sent_reject').order_by('-id')
-        friends_recv_reject = Friend.objects.filter(user=User(uid=uid), status='recv_reject').order_by('-id')
-        friends_removed = Friend.objects.filter(user=User(uid=uid), status='removed').order_by('-id')
+        uid = GetSelfUID(request)
+        page = int(request.REQUEST.get('page', 0))
+        pagesize = 10
+        min = page * pagesize
+        max = (page + 1) * pagesize
+        friends_bound = Friend.objects.filter(user=User(uid=uid), status='bound').order_by('-id')[min:max]
+        friends_sent_invite = Friend.objects.filter(user=User(uid=uid), status='sent_invite').order_by('-id')[min:max]
+        friends_recv_invite = Friend.objects.filter(user=User(uid=uid), status='recv_invite').order_by('-id')[min:max]
+        friends_sent_reject = Friend.objects.filter(user=User(uid=uid), status='sent_reject').order_by('-id')[min:max]
+        friends_recv_reject = Friend.objects.filter(user=User(uid=uid), status='recv_reject').order_by('-id')[min:max]
+        friends_removed = Friend.objects.filter(user=User(uid=uid), status='removed').order_by('-id')[min:max]
 
         res_friends = {}
         res_friends['bound'] = []
@@ -115,6 +119,7 @@ def ShowFriend(request):
         res_friends['sent_reject'] = []
         res_friends['recv_reject'] = []
         res_friends['removed'] = []
+        hasmore = 0
 
         for f in friends_bound:
             profile = Profile.objects.get(user=User(uid=f.fid))
@@ -141,6 +146,16 @@ def ShowFriend(request):
             res_friends['removed'].append(profile.toJSON())
 
         ret['friends'] = res_friends
+        
+        if     len(friends_bound) >= pagesize \
+            or len(friends_sent_invite) >= pagesize \
+            or len(friends_recv_invite) >= pagesize \
+            or len(friends_sent_reject) >= pagesize \
+            or len(friends_recv_reject) >= pagesize \
+            or len(friends_removed) >= pagesize:
+            hasmore = 1
+            
+        ret['hasmore'] = hasmore
 
         return SuccessResponse(ret)
     except:

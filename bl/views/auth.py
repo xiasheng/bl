@@ -73,6 +73,7 @@ def Login(request):
 
         ret['uid'] = user.uid
         ret['access_token'] = GenerateAccessToken(user.uid)
+        ret['xmpp_account'] = user.xmpp_account
         return SuccessResponse(ret)
 
     except:

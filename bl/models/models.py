@@ -49,7 +49,14 @@ class Photo(models.Model):
     url = models.URLField(null=True)
     path = models.CharField(max_length=128, null=True)
     time_created = models.IntegerField(default=int(time.time()))
-     
+
+    def toJSON(self):
+        r = {}
+        r['pid'] = self.id
+        r['url'] = self.url
+        r['time_created'] = self.time_created
+
+        return r     
 class Status(models.Model):
     user = models.ForeignKey('User')
     text = models.CharField(max_length=1024)

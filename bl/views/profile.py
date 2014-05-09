@@ -25,9 +25,9 @@ def UpdateProfile(request):
         file = request.FILES.get('file', None)       
         if file:
             (path, profile.avatar) = SaveFile(file, 'ProfileAvatar')
-            ret['avatar'] = profile.avatar
 
         profile.save()
+        ret['profile'] = profile.toJSON()
         return SuccessResponse(ret)
     except:
         return ErrorResponse(E_PARAM)   
@@ -82,7 +82,7 @@ def ListPhoto(request):
         ret['count'] = len(photos)
         ret['photos'] = []
         for p in photos:
-            ret['photos'].append(p.url)
+            ret['photos'].append(p.toJSON())
             
         return SuccessResponse(ret)
     except:

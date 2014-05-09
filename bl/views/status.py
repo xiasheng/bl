@@ -3,6 +3,7 @@ from bl.views.common import *
 from bl.views.file import SaveFile
 from bl.models.models import User, Status, StatusFile
 from bl.views.auth import GetSelfUID
+import sys
 
 def PostStatus(request):
     ret = {}
@@ -26,13 +27,14 @@ def PostStatus(request):
             raise BLParamError( 'illegal type: ' + type)
         
         status = Status.objects.create(user=user, text=text, type=type) 
-        ret['sid'] = status.id
+        #ret['sid'] = status.id
         #ret['type'] = status.type
         
         if type in ['image', 'audio']:
             status_file = StatusFile.objects.create(status=status, url=url, path=path)
-            ret['url'] = url
+            #ret['url'] = url
 
+        ret['status'] = status.toJSON()
         return SuccessResponse(ret)
     except BLParamError, e:
         return ErrorResponse(E_PARAM, e.info)
@@ -53,13 +55,16 @@ def GetStatusByID(request):
     except:
         return ErrorResponse(E_PARAM, 'status does not exist')
 
+
 def GetStatusByUser(request):
     ret = {}
     try:
         uid = request.GET.get('uid')
-        since_id = request.GET.get('since_id', 0)
-        statuses = Status.objects.filter(pk__gt=since_id, user=User(uid=uid)).order_by('-id')[:10]
+        since_id = int(request.REQUEST.get('since_id', 0))
+        max_id = int(request.REQUEST.get('max_id', sys.maxint))
         
+        statuses = Status.objects.filter(pk__gt=since_id, pk__lt=max_id, user=User(uid=uid)).order_by('-id')[:10]
+
         res_statuses = []
         for s in statuses:
             res_statuses.append(s.toJSON())
@@ -70,7 +75,8 @@ def GetStatusByUser(request):
             ret['hasmore'] = 0
         else:
             ret['hasmore'] = 1
-            
-        return SuccessResponse(ret)    
+
+        return SuccessResponse(ret)
     except:
-        return ErrorResponse(E_PARAM)
+        return ErrorResponse(E_PARAM) 
+
