@@ -22,6 +22,9 @@ def generatePassword():
 def generateXmppAccount(uid):
     return 'x' + str(uid) + '@test.com'
 
+def GetXmppAccountByUid(uid):
+    return 'x' + str(uid) + '@test.com'
+
 def checkEmail(email):
     try:
         if email is None:

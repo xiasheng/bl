@@ -95,3 +95,19 @@ class Friend(models.Model):
     info = models.CharField(max_length=64, null=True)
     time_modified = models.IntegerField(default=int(time.time()))
 
+class Group(models.Model):
+    gid = models.IntegerField(primary_key=True)
+    type = models.CharField(max_length=64, default='none') #anonymous password needconfirm 
+    info = models.CharField(max_length=64, null=True)
+    max_member = models.IntegerField(default=100)
+    avatar = models.URLField(null=True)
+    time_created = models.IntegerField(default=int(time.time()))
+    
+class GroupMember(models.Model):
+    gid = models.ForeignKey('Group')
+    mid = models.ForeignKey('User')
+    status = models.CharField(max_length=64, null=True)    #bound unbound
+    type = models.CharField(max_length=64, default='none') #owner administrator member guest
+    nickname = models.CharField(max_length=64, null=True)
+    time_created = models.IntegerField(default=int(time.time()))  
+

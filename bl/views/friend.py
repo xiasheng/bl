@@ -2,6 +2,17 @@
 from bl.views.common import *
 from bl.models.models import User, Profile, Friend
 from bl.views.auth import GetSelfUID
+from bl.views.account import GetXmppAccountByUid
+from bl.views.zmqsender import SendTextMsg
+import json
+
+def xmppNotify(fr, to, msg):
+    msg['from'] = str(fr)
+    msg['to'] = str(to)
+    fr_xmpp = GetXmppAccountByUid(fr)
+    to_xmpp = GetXmppAccountByUid(to)
+
+    return SendTextMsg(fr_xmpp, to_xmpp, msg)
 
 def InviteRequest(request):
     ret = {}
@@ -15,17 +26,21 @@ def InviteRequest(request):
         if User.objects.filter(uid=fid).count() == 0 or uid == int(fid):
             raise BLParamError( 'illegal fid: ' + str(fid))
 
-        friend1,created = Friend.objects.get_or_create(user=User(uid=uid), fid=fid)             
+        friend1,created = Friend.objects.get_or_create(user=User(uid=uid), fid=fid)
         friend1.status = 'sent_invite'
         friend1.info = info
         friend1.save()
 
-        friend2,created = Friend.objects.get_or_create(user=User(uid=fid), fid=uid)             
+        friend2,created = Friend.objects.get_or_create(user=User(uid=fid), fid=uid)
         friend2.status = 'recv_invite'
         friend2.info = info
         friend2.save()
-        
+
         #send xmpp msg to notify otherside
+        msg = {}
+        msg['type'] = 'recv_friend_invite_request'
+        msg['info'] = info
+        res = xmppNotify(uid, fid, msg)
 
         return SuccessResponse(ret)
     except BLParamError, e:
@@ -64,8 +79,13 @@ def InviteResponse(request):
         friend1.save()
         friend2.status = status2
         friend2.save()
-        
+
         #send xmpp msg to notify otherside
+        msg = {}
+        msg['type'] = 'recv_friend_invite_response'
+        msg['info'] = type
+        xmppNotify(uid, fid, msg)
+        
         return SuccessResponse(ret)
     except BLParamError, e:
         return ErrorResponse(E_PARAM, e.info)
@@ -92,6 +112,9 @@ def DelFriend(request):
             friend2.delete()
 
         #send xmpp msg to notify otherside
+        msg = {}
+        msg['type'] = 'recv_friend_remove'
+        xmppNotify(uid, fid, msg)        
     except:
         pass
 
@@ -146,7 +169,7 @@ def ShowFriend(request):
             res_friends['removed'].append(profile.toJSON())
 
         ret['friends'] = res_friends
-        
+
         if     len(friends_bound) >= pagesize \
             or len(friends_sent_invite) >= pagesize \
             or len(friends_recv_invite) >= pagesize \
@@ -154,7 +177,7 @@ def ShowFriend(request):
             or len(friends_recv_reject) >= pagesize \
             or len(friends_removed) >= pagesize:
             hasmore = 1
-            
+
         ret['hasmore'] = hasmore
 
         return SuccessResponse(ret)
